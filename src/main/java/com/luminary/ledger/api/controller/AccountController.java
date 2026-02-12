@@ -20,9 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -77,10 +74,11 @@ public class AccountController {
     }
 
     @GetMapping("/{id}/transactions")
-    public ResponseEntity<List<TransactionResponse>> getAccountTransactions(@PathVariable Long id) {
-        List<TransactionResponse> transactions = transactionService.getTransactionsByAccountId(id).stream()
-                .map(transactionDtoMapper::toResponse)
-                .toList();
+    public ResponseEntity<Page<TransactionResponse>> getAccountTransactions(
+            @PathVariable Long id,
+            @PageableDefault(size = 20) Pageable pageable) {
+        Page<TransactionResponse> transactions = transactionService.getTransactionsByAccountId(id, pageable)
+                .map(transactionDtoMapper::toResponse);
         return ResponseEntity.ok(transactions);
     }
 }

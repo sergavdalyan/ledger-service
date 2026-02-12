@@ -30,7 +30,7 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<TransactionResponse> createTransaction( //Must validate that debits equal credits!
+    public ResponseEntity<TransactionResponse> createTransaction(
             @Valid @RequestBody CreateTransactionRequest request) {
 
         List<TransactionEntry> entries = request.entries().stream()
