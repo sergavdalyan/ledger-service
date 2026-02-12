@@ -9,6 +9,8 @@ import com.luminary.ledger.persistence.entity.TransactionEntity;
 import com.luminary.ledger.persistence.mapper.TransactionEntityMapper;
 import com.luminary.ledger.persistence.repository.AccountRepository;
 import com.luminary.ledger.persistence.repository.TransactionRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,16 +62,17 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Transaction> getTransactionsByAccountId(Long accountId) {
+    public Page<Transaction> getTransactionsByAccountId(Long accountId, Pageable pageable) {
         if (!accountRepository.existsById(accountId)) {
             throw new AccountNotFoundException(accountId);
         }
-        List<Long> transactionIds = transactionRepository.findTransactionIdsByAccountId(accountId);
+        Page<Long> transactionIds = transactionRepository.findTransactionIdsByAccountId(accountId, pageable);
         if (transactionIds.isEmpty()) {
-            return List.of();
+            return transactionIds.map(id -> null);
         }
-        return transactionRepository.findAllWithEntriesByIds(transactionIds).stream()
-                .map(transactionMapper::toDomain)
-                .toList();
+        List<TransactionEntity> entities = transactionRepository.findAllWithEntriesByIds(transactionIds.getContent());
+        Map<Long, Transaction> transactionMap = entities.stream()
+                .collect(Collectors.toMap(TransactionEntity::getId, transactionMapper::toDomain));
+        return transactionIds.map(transactionMap::get);
     }
 }
